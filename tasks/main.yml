@@ -1,0 +1,10 @@
+---
+- name: Check directories exists and have proper permissions
+  file:
+    groups: "{{item.group|default(dirmake_group)}}"
+    mode: "{{item.mode|default(dirmake_mode)}}"
+    owner: "{{item.mode|default(dirmake_owner)}}"
+    path: "{{item.path}}"
+    state: "directory"
+    recurse: "{{item.recurse|default(dirmake_recurse)}}"
+  with_items: "{{dirmake_directories}}"

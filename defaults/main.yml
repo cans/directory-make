@@ -1,0 +1,6 @@
+---
+dirmake_directories: []
+dirmake_group: "{{omit}}"
+dirmake_mode: "0700"
+dirmake_owner: "{{omit}}"
+dirmake_recurse: true
