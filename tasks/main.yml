@@ -1,0 +1,19 @@
+---
+- name: Show list of directories to check
+  debug: var="dirmake_directories"
+  when: "lookup('env', 'DEBUG') is defined or debug is defined"
+
+- name: Check directories exists and have proper permissions
+  file:
+    group: "{{ item.group|default(dirmake_group) }}"
+    mode: "{{ item.mode|default(dirmake_mode) }}"
+    owner: "{{ item.owner|default(dirmake_owner) }}"
+    path: "{{ item.path }}"
+    state: "directory"
+    recurse: "{{ item.recurse|default(dirmake_recurse) }}"
+  with_items: "{{ dirmake_directories }}"
+  become: "{% if item.become is defined or item.become_user is defined %}true{% else %}false{% endif %}"
+  become_user: "{% if item.become is defined or item.become_user is defined %}{{item.become_user|default(dirmake_become_user)}}{% else %}{{omit}}{% endif %}"
+
+
+# vim: et:syntax=yaml:sw=2:ts=2:
