@@ -18,7 +18,7 @@
 
     - debug: var=directory_statuses
 
-    - name: "Check directories status"
+    - name: "Assert directories status"
       fail:
         msg: "Failed checks: directory `{{item.item.path}}' does not exists"
       when: "item.changed"
