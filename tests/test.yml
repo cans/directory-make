@@ -11,7 +11,7 @@
   tasks:
     - name: "Get directories status"
       file:
-        path: item.path
+        path: "{{item.path}}"
         state: directory
       register: directory_statuses
       with_items: "{{ directories }}"
