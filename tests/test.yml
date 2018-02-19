@@ -1,31 +1,53 @@
 ---
 - hosts: servers
+  name: "directory-make role test suite"
+  gather_facts: false
   vars:
     directories:
       # test relative directory
       - path: "test/directory"
+        owner: "admin"
+        group: "regular"
       - path: "/tmp/directory-make-role/directory"
+        owner: "regular"
+        group: "regular"
+  remote_user: admin
   roles:
     - role: "directory-make"
       dirmake_directories: "{{ directories }}"
   tasks:
-    - name: "Get directories status"
+
+    - name: "Ensure directories where created"
       file:
         path: "{{item.path}}"
         state: directory
       register: directory_statuses
       with_items: "{{ directories }}"
+      failed_when: 'directory_statuses.changed'
 
-    - debug: var=directory_statuses
+    - name: "Ensure directories owners are those expected"
+      stat:
+        path: "{{item.path}}"
+      register: sdirectory_statuses
+      with_items: "{{ directories }}"
+      failed_when: >
+        sdirectory_statuses.changed != 0
+        or item.owner != sdirectory_statuses.stat.pw_name
 
-    - name: "Assert directories status"
-      fail:
-        msg: "Failed checks: directory `{{item.item.path}}' does not exists"
-      when: "item.changed"
-      with_items: "{{ directory_statuses.results }}"
+    - name: "Ensure directories groups are those expected"
+      stat:
+        path: "{{item.path}}"
+      register: sdirectory_statuses
+      with_items: "{{ directories }}"
+      failed_when: >
+        sdirectory_statuses.changed != 0
+        or 'regular' != sdirectory_statuses.stat.gr_name
 
     - name: "Remove directories"
       file:
         path: "{{item.path}}"
         state: "absent"
       with_items: "{{ directories }}"
+
+
+# vim: et:sw=4:syntax=yaml:ts=4:

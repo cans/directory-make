@@ -1,0 +1,64 @@
+version: 2
+
+jobs:
+  build:
+    working_directory: ~/directory-make
+    docker:
+      - image: ncaniart/ansible-testing-base:20180617150839
+        # 20180617044906
+        # 20180507222142
+        environment:
+          ANSIBLE_ROLE: directory-make
+          TEST_REPORTS_DIR: ~/test-reports
+    steps:
+      - checkout
+
+      - run:
+          name: Create required directories
+          command: |
+             mkdir -p $TEST_REPORTS_DIR/ansible-lint.log ~/.virtualenvs ~/.ssh
+             # One needs to concateante here any files that can alter the virtualenv in a way:
+             #   - setup.py: for the endpoints installed in $VIRTUAL_ENV/bin
+             #   - requirements.txt
+             #   - dev-requirements.txt
+             # Since we do a develop install of the code itself (cf. the '-e .' in dev-requirments.txt)
+             # it does not matter.
+             cat tests/requirements.txt tests/requirements.yml > circleci-requirements.txt
+             echo $(pwd) >> circleci-requirements.txt
+             # Note that if the workflow is split, you will need to have the file `venv/circleci-requirements.txt`
+             # passed from one build job to the other, either through caching or using workspaces.
+
+      - restore_cache:
+          key: v1-dependency-cache-{{ checksum "circleci-requirements.txt" }}
+
+      - run:
+          name: Install dependencies
+          command: |
+            if [ -d "${HOME}/.virtualenvs/ansible-role-testing"  ]
+            then
+                :
+            else
+                pushd ~/.virtualenvs
+                python -m virtualenv ansible-role-testing
+                popd
+                . ~/.virtualenvs/ansible-role-testing/bin/activate
+                pip install --upgrade "pip>=9.0.1"
+                pip install --upgrade -r tests/requirements.txt
+                ansible-galaxy install -r tests/requirements.yml -p tests/roles
+            fi
+
+      - save_cache:
+          key: v1-dependency-cache-{{ checksum "circleci-requirements.txt" }}
+          paths:
+            - ~/.virtualenvs
+            - ~/${ANSIBLE_ROLE}/tests/roles
+
+      - run:
+          name: Run tests
+          command: |
+            . ~/.virtualenvs/ansible-role-testing/bin/activate
+            tests/run-checks.sh
+            ansible-playbook -i tests/inventory tests/test.yml --connection=local
+
+
+# vim: et:sw=2:syntax=yaml:ts=2:
