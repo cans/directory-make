@@ -1,7 +1,7 @@
 ---
 - name: Show list of directories to check
   debug: var="dirmake_directories"
-  when: "lookup('env', 'DEBUG') is defined or debug is defined"
+  when: "lookup('env', 'DEBUG') != ''"
 
 - name: Check directories exists and have proper permissions
   file:
